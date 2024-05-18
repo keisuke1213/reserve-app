@@ -1,12 +1,14 @@
+import { config } from 'dotenv';
+config();
 import {Pool} from 'pg';
 
 
 export const pool: Pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: parseInt(process.env.DB_PORT || '5432'),
+    user: process.env.POSTGRES_USER,
+    host: process.env.POSTGRES_HOST,
+    database: process.env.POSTGRES_DATABASE,
+    password: process.env.POSTGRES_PASSWORD,
+    port: 5432,
 });
 
 export async function setUpDate(): Promise<void> {
@@ -15,8 +17,10 @@ export async function setUpDate(): Promise<void> {
         await client.query(`
            CREATE TABLE IF NOT EXISTS users(
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL
+                name VARCHAR(100) NOT NULL,
+                email VARCHAR(100) NOT NULL,
+                password VARCHAR(100) NOT NULL,
+                role VARCHAR(20) NOT NULL
            )
         `);
 
@@ -24,7 +28,7 @@ export async function setUpDate(): Promise<void> {
             CREATE TABLE IF NOT EXISTS menus (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(100),
-                price INTEGER
+                price INTEGER,
             )
         `);
 
@@ -46,15 +50,5 @@ export async function setUpDate(): Promise<void> {
     }
 }
 
-async function getUsers(): Promise<any> {
-    const client = await pool.connect();
-    try {
-        const result = await client.query('SELECT * FROM users');
-        return result.rows;
-    } catch (error) {
-        console.error('Error getting users:', error);
-    } finally {
-        client.release();
-    }
-}
+
 
