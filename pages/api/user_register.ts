@@ -1,19 +1,38 @@
-import {NextApiRequest, NextApiResponse} from 'next';
-import {pool} from '../../lib/db';
+import { PrismaClient } from "@prisma/client/extension";
+import bcrypt from "bcrypt";
+import { NextApiRequest, NextApiResponse } from 'next'
 
-export default async function register(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-    if(req.method === 'POST'){
-        const {name, email, password, role} = req.body;
-        try {
-            const client = await pool.connect();
-            const result = await client.query('INSERT INTO users (name,email,password,role) VALUES ($1,$2,$3,$4) RETURNING *', [name, email, password, role]);
-            const userId = result.rows[0].id;
-            res.status(200).json({status: 'success', userId: userId });
-            console.log('User registered successfully');
-        } catch (error: any) {
-            res.status(500).json({error: error.message});
+
+const prisma = new PrismaClient()
+
+export default async function handler(req: NextApiRequest,res: NextApiResponse) {
+    if(req.method === 'POST') {
+        const {name, email,password ,role} = req.body;
+
+        if(!name || !email || !password || !role) {
+            return res.status(400).json({message: 'Please fill all fields'})
         }
-    } else {
-        res.status(405).json({error: 'Method not allowed'});
-    }
-}
+
+        if(!email.includes('@')) {
+            res.status(400).json({  message: 'Invalid email address'})
+        }
+
+        const hashedPassword = bcrypt   .hashSync(password,10)
+
+        try {
+            const user = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    password: hashedPassword,
+                    role
+                }
+            });
+            res.status(201).json(user)
+        } catch(error) {
+            res.status(500).json({message: 'Error creating user'})
+        }
+        } else {
+            res.status(405).json({message: 'Method not allowed'})
+        }
+} 
