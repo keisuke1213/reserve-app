@@ -1,8 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { NextApiRequest, NextApiResponse } from 'next'
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
+const secret = process.env.JWT_SECRET;
 
 export default async function Handler(req: NextApiRequest,res: NextApiResponse) {
     if(req.method === 'POST') {
@@ -37,12 +39,26 @@ export default async function Handler(req: NextApiRequest,res: NextApiResponse) 
                     role
                 }
             });
-            res.status(201).json(user)
+
+            if (!secret) {
+                throw new Error('Secret is undefined');
+            }
+            const token = jwt.sign({userId: user.id, email: user.email, role: user.role}, secret, {expiresIn: '1h'});
+            const refreshToken = jwt.sign({userId: user.id}, secret, {expiresIn: '7d'});
+
+            await prisma.refreshToken.create({
+                data: {
+                    token: refreshToken,
+                    userId: user.id,
+                }
+            })
+
+            res.status(201).json({user,token,refreshToken})
         } catch(error) {
             console.error(error);
             res.status(500).json({message: 'Error creating user'})
         }
     } else {
-        res.status(405).json({message: 'Method not allowed'}) // 不要な閉じ括弧を削除
+        res.status(405).json({message: 'Method not allowed'}) 
     }
 }
