@@ -9,9 +9,9 @@ const secret = process.env.JWT_SECRET;
 
 export default async function Handler(req: NextApiRequest,res: NextApiResponse) {
     if(req.method === 'POST') {
-        const {name, email,password ,role} = req.body;
+        const {name, email,password} = req.body;
 
-        if(!name || !email || !password || !role) {
+        if(!name || !email || !password) {
             return res.status(400).json({message: 'Please fill all fields'})
         }
 
@@ -37,7 +37,6 @@ export default async function Handler(req: NextApiRequest,res: NextApiResponse) 
                     name,
                     email,
                     password: hashedPassword,
-                    role
                 }
             });
 
@@ -55,21 +54,21 @@ export default async function Handler(req: NextApiRequest,res: NextApiResponse) 
             })
 
             res.setHeader('Set-Cookie', [
-                cookie.serialize('token',token, {
+                cookie.serialize('token', token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV !== 'development',
-                    maxAge: 60 * 60,
+                    maxAge: 60 * 60, // 1 hour
                     sameSite: 'strict',
                     path: '/',
                 }),
-            ])
-            cookie.serialize('refreshToken',refreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV !== 'development',
-                maxAge: 60 * 60 * 24 * 7,
-                sameSite: 'strict',
-                path: '/',
-            })
+                cookie.serialize('refreshToken', refreshToken, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV !== 'development',
+                    maxAge: 60 * 60 * 24 * 7, // 1 week
+                    sameSite: 'strict',
+                    path: '/',
+                }),
+            ]);
 
             res.status(201).json({user})
         } catch(error) {
