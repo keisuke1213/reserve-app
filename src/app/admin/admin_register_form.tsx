@@ -1,7 +1,7 @@
 "use client"
 import {useState} from 'react';
 
-export const adminRegisterForm = () => {
+export const AdminRegisterForm = () => {
     const [form, setForm] = useState({
         name: '',
         email: '',
