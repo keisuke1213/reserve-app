@@ -18,6 +18,16 @@ export default async function Handler(req: NextApiRequest,res: NextApiResponse) 
         if(!email.includes('@')) {
             return res.status(400).json({message: 'Invalid email address'})
         }
+        
+        const existingUser = await prisma.user.findUnique({
+            where: {
+                email: email,
+            }
+        })
+
+        if(existingUser) {
+            return res.status(400).json({message: 'User already exists'})
+        }
 
         const hashedPassword = bcrypt.hashSync(password,10)
 
