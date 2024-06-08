@@ -27,6 +27,7 @@ export default async function Handler(req: NextApiRequest,res: NextApiResponse) 
                     name,
                     email,
                     password: hashedPassword,
+                    isAdmin: true,
                 }
             });
             
